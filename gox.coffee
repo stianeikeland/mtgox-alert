@@ -8,10 +8,8 @@ log = require 'npmlog'
 express = require 'express'
 
 jsonstream = new JSONStream()
-gox = Gox.createStream()
-boxcar = new Boxcar.Provider process.env.BOXCAR_KEY, process.env.BOXCAR_SECRET
 
-gox.pipe jsonstream
+boxcar = new Boxcar.Provider process.env.BOXCAR_KEY, process.env.BOXCAR_SECRET
 
 port = process.env.PORT or 5000
 targetvalue = null
@@ -25,12 +23,16 @@ app.get '/', (req, res) ->
 app.listen port, () ->
 	log.info 'http', "Listening on port #{port}."
 
+startStream = (jsonstream) ->
+	gox = Gox.createStream()
+	gox.pipe jsonstream
+	gox
+
 notify = (message) ->
 	boxcar.broadcast message
 	log.info 'notify', message
 
-
-jsonstream.on 'data', (data) ->
+processData = (data) ->
 	if not data?.ticker?.last?.value?
 		log.warn 'invalid', 'invalid data received', data
 		return
@@ -51,4 +53,17 @@ jsonstream.on 'data', (data) ->
 	if btcvalue < targetvalue - STEP
 		notify "bitcoin falling => $#{btcvalue}"
 		targetvalue -= STEP
+
+jsonstream.on 'data', processData
+
+gox = startStream jsonstream
+
+gox.on 'end', () ->
+	log.info 'reconnect', 'stream ended, reconnecting stream'
+	gox = startStream jsonstream
+
+
+
+
+
 
