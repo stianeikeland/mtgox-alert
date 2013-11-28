@@ -1,0 +1,16 @@
+{
+  "name": "goxalert",
+  "version": "1.0.0",
+  "dependencies": {
+    "coffee-script": "~1.6.3",
+    "goxstream": "~0.1.0",
+    "json-stream": "~0.2.0",
+    "npmlog": "0.0.6",
+    "boxcar": "~0.9.7",
+    "express": "~3.4.5"
+  },
+  "engines": {
+    "node": "0.10.x",
+    "npm": "*"
+  }
+}
