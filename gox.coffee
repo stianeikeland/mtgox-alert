@@ -8,6 +8,7 @@ log = require 'npmlog'
 express = require 'express'
 
 jsonstream = new JSONStream()
+gox = null
 
 boxcar = new Boxcar.Provider process.env.BOXCAR_KEY, process.env.BOXCAR_SECRET
 
@@ -38,11 +39,15 @@ resetTimer = () ->
 reconnect = () ->
 	log.info 'reconnect', 'stream ended, reconnecting stream'
 
+	delete jsonstream if jsonstream?
+	delete gox if gox?
+
 	jsonstream = new JSONStream()
 	jsonstream.on 'data', processData
 
 	gox = Gox.createStream()
 	gox.pipe jsonstream
+	resetTimer()
 
 processData = (data) ->
 	if not data?.ticker?.last?.value?
