@@ -40,9 +40,6 @@ resetTimer = () ->
 reconnect = () ->
 	log.info 'reconnect', 'stream ended, reconnecting stream'
 
-	delete jsonstream if jsonstream?
-	delete gox if gox?
-
 	jsonstream = new JSONStream()
 	jsonstream.on 'data', processData
 
