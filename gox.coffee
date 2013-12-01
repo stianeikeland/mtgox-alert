@@ -24,11 +24,6 @@ app.get '/', (req, res) ->
 app.listen port, () ->
 	log.info 'http', "Listening on port #{port}."
 
-startStream = (jsonstream) ->
-	gox = Gox.createStream()
-	gox.pipe jsonstream
-	gox
-
 notify = (message) ->
 	boxcar.broadcast message
 	log.info 'notify', message
@@ -42,7 +37,12 @@ resetTimer = () ->
 
 reconnect = () ->
 	log.info 'reconnect', 'stream ended, reconnecting stream'
-	gox = startStream jsonstream
+
+	jsonstream = new JSONStream()
+	jsonstream.on 'data', processData
+
+	gox = Gox.createStream()
+	gox.pipe jsonstream
 
 processData = (data) ->
 	if not data?.ticker?.last?.value?
@@ -67,8 +67,6 @@ processData = (data) ->
 	if btcvalue < targetvalue - STEP
 		notify "bitcoin falling => $#{btcvalue}"
 		targetvalue -= STEP
-
-jsonstream.on 'data', processData
 
 reconnect()
 
