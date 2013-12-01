@@ -14,6 +14,7 @@ boxcar = new Boxcar.Provider process.env.BOXCAR_KEY, process.env.BOXCAR_SECRET
 port = process.env.PORT or 5000
 targetvalue = null
 lastvalue = null
+reconnectTimer = null
 
 app = express()
 
@@ -32,6 +33,17 @@ notify = (message) ->
 	boxcar.broadcast message
 	log.info 'notify', message
 
+# goxstream library do not seem to handle reconnects properly,
+# we're going to assume that if no data is received for 2 minutes, the
+# connection is broken.
+resetTimer = () ->
+	clearTimeout reconnectTimer if reconnectTimer?
+	reconnectTimer = setTimeout reconnect, 2*60*1000
+
+reconnect = () ->
+	log.info 'reconnect', 'stream ended, reconnecting stream'
+	gox = startStream jsonstream
+
 processData = (data) ->
 	if not data?.ticker?.last?.value?
 		log.warn 'invalid', 'invalid data received', data
@@ -39,6 +51,8 @@ processData = (data) ->
 
 	btcvalue = Math.round(parseFloat(data.ticker.last.value))
 	lastvalue = btcvalue
+
+	resetTimer()
 
 	log.info 'ticker', "$#{btcvalue}", "([$#{targetvalue - STEP},$#{targetvalue + STEP}])"
 
@@ -56,13 +70,7 @@ processData = (data) ->
 
 jsonstream.on 'data', processData
 
-gox = startStream jsonstream
-
-gox.on 'end', () ->
-	log.info 'reconnect', 'stream ended, reconnecting stream'
-	gox = startStream jsonstream
-
-
+reconnect()
 
 
 
