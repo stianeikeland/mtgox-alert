@@ -33,6 +33,7 @@ notify = (message) ->
 # we're going to assume that if no data is received for 2 minutes, the
 # connection is broken.
 resetTimer = () ->
+	log.info 'Resetting reconnect timer'
 	clearTimeout reconnectTimer if reconnectTimer?
 	reconnectTimer = setTimeout reconnect, 2*60*1000
 
